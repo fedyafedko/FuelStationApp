@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="FuelStation.BLL/FuelStation.BLL.csproj" Id="73d7bba2-989b-4a55-8c86-fb8b4505ab1a" />
+  <Project Path="FuelStation.Common/FuelStation.Common.csproj" Id="f21b14ff-a8d6-401d-9d57-27f1e6560ee5" />
+  <Project Path="FuelStation.DAL/FuelStation.DAL.csproj" />
+  <Project Path="FuelStation.Hangfire/FuelStation.Hangfire.csproj" Id="a93c76f7-62a2-4cef-8909-f6c7d58365d6" />
+  <Project Path="FuelStation.Seeding/FuelStation.Seeding.csproj" Id="a281a122-0726-435a-808d-ca192aaaad58" />
+  <Project Path="FuelStation/FuelStation.csproj" />
+</Solution>
