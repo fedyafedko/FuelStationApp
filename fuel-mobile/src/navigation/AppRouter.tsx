@@ -8,6 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import FuelRequestWaitingScreen from '../screens/FuelRequestWaitingScreen';
 
 import ProtectedRoute from './ProtectedRoute';
+import ProfileScreen from '../screens/profile/ProfileScreen';
 
 export default function AppRouter() {
   const { isAuthenticated, _hasRehydrated } = useAuthStore();
@@ -49,6 +50,15 @@ export default function AppRouter() {
           element={
             <ProtectedRoute>
               <FuelRequestWaitingScreen />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfileScreen />
             </ProtectedRoute>
           }
         />

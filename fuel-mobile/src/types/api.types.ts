@@ -67,7 +67,7 @@ export interface UserDTO {
 // src/types/api.types.ts
 
 // Статус замовлення
-export type RequestStatus = 0 | 1 | 2 | 3;
+export type RequestStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 // Локація
 export interface LocationDTO {

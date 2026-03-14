@@ -63,7 +63,8 @@ public class ProcessFuelRequestService : IProcessFuelRequestService
                         return null;
 
                     var routeDistance = osrmResponse.Routes[0].Distance;
-                    var requiredBattery = CalculateRequiredBattery(routeDistance / 1000.0);
+                    var oneWayBattery = CalculateRequiredBattery(routeDistance / 1000.0);
+                    var requiredBattery = oneWayBattery * 2.0;
 
                     return new
                     {
