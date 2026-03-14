@@ -34,6 +34,15 @@ public class FuelRequestController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("paid")]
+    public async Task<IActionResult> Paid(Guid requestId)
+    {
+        var userId = HttpContext.GetUserId();
+        await _fuelRequestService.PaidAsync(userId, requestId);
+
+        return Ok();
+    }
+
     [HttpPut("complete")]
     public async Task<IActionResult> Complete(Guid requestId)
     {
@@ -41,5 +50,14 @@ public class FuelRequestController : ControllerBase
         await _fuelRequestService.CompleteRequestAsync(userId, requestId);
 
         return Ok();
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> GetById(Guid requestId)
+    {
+        var result = await _fuelRequestService.GetByIdAsync(requestId);
+
+        return Ok(result);
     }
 }

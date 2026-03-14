@@ -7,4 +7,6 @@ public enum RequestStatus
     InProgress = 2,
     Cancelled = 3,
     RobotUnavailable = 4,
+    WaitingForPayment = 5,
+    StartFueling = 6,
 }

@@ -1,4 +1,6 @@
-﻿namespace FuelStation.Extensions;
+﻿using FuelStation.Common.Exceptions;
+
+namespace FuelStation.Extensions;
 
 public static class HttpContextExtension
 {
@@ -7,7 +9,7 @@ public static class HttpContextExtension
         var claim = context.User.Claims.FirstOrDefault(c => c.Type == "id");
 
         if (claim == null)
-            throw new Exception("Unauthorized");
+            throw new AuthException("Unauthorized");
 
         return new Guid(claim.Value);
     }

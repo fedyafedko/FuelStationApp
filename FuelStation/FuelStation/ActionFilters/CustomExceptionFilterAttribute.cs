@@ -1,4 +1,5 @@
 ﻿using FuelStation.Common.Enums;
+using FuelStation.Common.Exceptions;
 using FuelStation.Common.Exceptions.Base;
 using FuelStation.Common.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,13 @@ public class CustomExceptionFilterAttribute : ExceptionFilterAttribute
     {
         var actionResult = context.Exception switch
         {
+            AuthException ex =>
+            new ObjectResult(
+                new ErrorDTO(ex.ErrorCode, ex.Message)
+            )
+            {
+                StatusCode = StatusCodes.Status401Unauthorized
+            },
             CustomExceptionBase ex => new BadRequestObjectResult(new ErrorDTO(ex.ErrorCode, ex.Message)),
             _ => new ObjectResult(
                 _environment.IsDevelopment()

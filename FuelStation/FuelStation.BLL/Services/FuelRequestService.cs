@@ -28,6 +28,16 @@ public class FuelRequestService : IFuelRequestService
         _locationService = locationService;
     }
 
+    public async Task<FuelRequestDTO> GetByIdAsync(Guid requestId)
+    {
+        var request = await _fuelRequestRepository
+            .Query()
+            .Include(x => x.Route)
+            .FirstOrDefaultAsync(x => x.Id == requestId);
+
+        return _mapper.Map<FuelRequestDTO>(request);
+    }
+
     public async Task<FuelRequestDTO> CreateAsync(Guid userId, CreateFuelRequestDTO dto)
     {
         var car = await _carRepository
@@ -58,16 +68,34 @@ public class FuelRequestService : IFuelRequestService
         var request = await _fuelRequestRepository
             .Query()
             .Include(x => x.Car)
+            .Include(x => x.Robot)
             .FirstOrDefaultAsync(x => x.Id == requestId)
             ?? throw new NotFoundException("Request not found");
 
         if (request.Car.UserId != userId)
             new ForbiddenException("Invalid user for this request");
 
-        if (request.ConfirmationCode != code)
-            new ExternalException("Invalid code");
+        if (request.Robot.UniqueNumber != code)
+            new ExternalException("Invalid unique number");
 
         request.IsConfirmed = true;
+        request.Status = RequestStatus.WaitingForPayment;
+        await _fuelRequestRepository.UpdateAsync(request);
+    }
+
+    public async Task PaidAsync(Guid userId, Guid requestId)
+    {
+        var request = await _fuelRequestRepository
+            .Query()
+            .Include(x => x.Car)
+            .FirstOrDefaultAsync(x => x.Id == requestId)
+            ?? throw new NotFoundException("Request not found");
+
+        if (request.Car.UserId != userId)
+            new ForbiddenException("Invalid user for this request");
+
+        request.Status = RequestStatus.StartFueling;
+
         await _fuelRequestRepository.UpdateAsync(request);
     }
 

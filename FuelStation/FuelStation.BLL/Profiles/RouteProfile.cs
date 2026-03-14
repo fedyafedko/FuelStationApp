@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FuelStation.Common.Models.DTOs.Route;
 using FuelStation.Common.Models.Routes;
 
 namespace FuelStation.BLL.Profiles;
@@ -16,5 +17,7 @@ public class RouteProfile : Profile
             .ForMember(dest => dest.Duration, opt => opt.MapFrom(src => src.Routes[0].Duration))
             .ForMember(dest => dest.Geometry, opt => opt.MapFrom(src => src.Routes[0].Geometry))
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
+
+        CreateMap<DAL.Entities.Route, RouteDTO>();
     }
 }

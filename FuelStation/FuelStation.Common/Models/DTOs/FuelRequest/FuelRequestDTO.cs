@@ -1,5 +1,6 @@
 ﻿using FuelStation.Common.Enums;
 using FuelStation.Common.Models.DTOs.Location;
+using FuelStation.Common.Models.DTOs.Route;
 
 namespace FuelStation.Common.Models.DTOs.FuelRequest;
 
@@ -11,5 +12,5 @@ public class FuelRequestDTO
     public double RequestedLiters { get; set; }
     public decimal TotalPrice { get; set; }
     public DateTime CreateAt { get; set; }
-    public LocationDTO Location { get; set; }
+    public RouteDTO Route { get; set; }
 }

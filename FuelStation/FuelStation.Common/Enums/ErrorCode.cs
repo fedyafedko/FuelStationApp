@@ -10,5 +10,6 @@ public enum ErrorCode
     Expired,
     Forbidden,
     IdentityError,
-    ExternalError
+    ExternalError,
+    AuthError
 }

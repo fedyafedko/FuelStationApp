@@ -90,7 +90,7 @@ public class ProcessFuelRequestService : IProcessFuelRequestService
 
             if (suitableRobot == null)
             {
-                if (availableResults.Any(x => x != null && x.RequiredBattery > 100))
+                if (availableResults.Any(x => x != null && x.RequiredBattery > 100) && request.CreateAt.AddMinutes(5) <= DateTime.UtcNow)
                     request.Status = RequestStatus.RobotUnavailable;
 
                 continue;
@@ -98,7 +98,6 @@ public class ProcessFuelRequestService : IProcessFuelRequestService
 
             request.RobotId = suitableRobot.Robot.Id;
             request.Status = RequestStatus.InProgress;
-            request.ConfirmationCode = Random.Shared.Next(100000, 999999).ToString();
             suitableRobot.Robot.Status = RobotStatus.Busy;
 
             var routeEntity = _mapper.Map<DAL.Entities.Route>(suitableRobot.RouteResponse);

@@ -48,6 +48,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IFuelRequestService, FuelRequestService>();
 builder.Services.AddScoped<IProcessFuelRequestService, ProcessFuelRequestService>();
+builder.Services.AddScoped<IRobotService, RobotService>();
 
 // Identity & Auth
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()

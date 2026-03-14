@@ -7,4 +7,6 @@ public interface IFuelRequestService
     Task CompleteRequestAsync(Guid userId, Guid requestId);
     Task ConfirmRequestAsync(Guid userId, Guid requestId, string code);
     Task<FuelRequestDTO> CreateAsync(Guid userId, CreateFuelRequestDTO dto);
+    Task<FuelRequestDTO> GetByIdAsync(Guid requestId);
+    Task PaidAsync(Guid userId, Guid requestId);
 }
