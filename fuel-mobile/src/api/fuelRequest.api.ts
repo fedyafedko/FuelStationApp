@@ -14,4 +14,9 @@ export const fuelRequestApi = {
     axiosInstance.put('/api/fuel-request/complete', null, {
       params: { requestId },
     }),
+
+  sendCar: (requestId: string) =>
+    axiosInstance.put('/api/fuel-request/send-car', null, {
+      params: { requestId },
+    }),
 };

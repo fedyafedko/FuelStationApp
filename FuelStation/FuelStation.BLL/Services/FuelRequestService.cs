@@ -131,4 +131,20 @@ public class FuelRequestService : IFuelRequestService
         if (!updated)
             throw new ExternalException("Failed to complete fuel request");
     }
+
+    public async Task SendCarToRequestAsync(Guid userId, Guid requestId)
+    {
+        var request = await _fuelRequestRepository
+           .Query()
+           .Include(x => x.Car)
+           .FirstOrDefaultAsync(x => x.Id == requestId)
+           ?? throw new NotFoundException("Request not found");
+
+        if (request.Car.UserId != userId)
+            new ForbiddenException("Invalid user for this request");
+
+        request.Status = RequestStatus.SendCar;
+
+        await _fuelRequestRepository.UpdateAsync(request);
+    }
 }

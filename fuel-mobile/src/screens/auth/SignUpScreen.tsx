@@ -19,6 +19,7 @@ export default function SignUpScreen() {
   const setTokens = useAuthStore((s) => s.setTokens);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     register,
@@ -30,13 +31,14 @@ export default function SignUpScreen() {
   });
 
   const onSubmit: SubmitHandler<SignUpDTO> = async (data) => {
+    setAuthError(null);
     try {
       const res = await authApi.signUp({ ...data, role: 'Driver' });
       await setTokens(res.data.accessToken, res.data.refreshToken);
       navigate('/');
     } catch (err: unknown) {
-      if (err instanceof Error) console.error('Error:', err.message);
-      else console.error('Unknown error', err);
+      if (err instanceof Error) setAuthError(err.message);
+      else setAuthError('Something went wrong. Please try again.');
     }
   };
 
@@ -59,13 +61,7 @@ export default function SignUpScreen() {
           position: relative;
         }
 
-        .bg-orb {
-          position: fixed;
-          border-radius: 50%;
-          filter: blur(80px);
-          pointer-events: none;
-          z-index: 0;
-        }
+        .bg-orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
         .orb-1 {
           width: 320px; height: 320px;
           background: radial-gradient(circle, rgba(251,146,60,0.18) 0%, transparent 70%);
@@ -82,14 +78,10 @@ export default function SignUpScreen() {
         @keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-15px,20px) scale(0.9); } }
 
         .card {
-          position: relative;
-          z-index: 1;
-          width: 100%;
-          max-width: 420px;
+          position: relative; z-index: 1;
+          width: 100%; max-width: 420px;
           min-height: 100dvh;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
+          display: flex; flex-direction: column; justify-content: center;
           padding: 40px 28px 48px;
           animation: slideUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
         }
@@ -110,65 +102,39 @@ export default function SignUpScreen() {
         }
 
         .badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(251,146,60,0.12);
-          border: 1px solid rgba(251,146,60,0.25);
-          border-radius: 100px;
-          padding: 6px 14px;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #fb923c;
-          margin-bottom: 28px;
-          width: fit-content;
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(251,146,60,0.12); border: 1px solid rgba(251,146,60,0.25);
+          border-radius: 100px; padding: 6px 14px;
+          font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+          color: #fb923c; margin-bottom: 28px; width: fit-content;
           animation: slideUp 0.6s 0.1s cubic-bezier(0.22,1,0.36,1) both;
         }
         .badge-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: #fb923c;
+          width: 6px; height: 6px; border-radius: 50%; background: #fb923c;
           animation: pulse 2s ease-in-out infinite;
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.8); }
-        }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
 
         .heading {
-          font-size: clamp(28px, 7vw, 36px);
-          font-weight: 700;
-          color: #ffffff;
-          line-height: 1.15;
-          margin-bottom: 8px;
-          letter-spacing: -0.02em;
+          font-size: clamp(28px, 7vw, 36px); font-weight: 700;
+          color: #fff; line-height: 1.15; margin-bottom: 8px; letter-spacing: -0.02em;
           animation: slideUp 0.6s 0.15s cubic-bezier(0.22,1,0.36,1) both;
         }
         .heading span {
           background: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
 
         .subheading {
-          font-size: 14px;
-          color: rgba(255,255,255,0.4);
-          font-weight: 400;
-          margin-bottom: 36px;
-          line-height: 1.5;
+          font-size: 14px; color: rgba(255,255,255,0.4); font-weight: 400;
+          margin-bottom: 36px; line-height: 1.5;
           animation: slideUp 0.6s 0.2s cubic-bezier(0.22,1,0.36,1) both;
         }
 
         .form { display: flex; flex-direction: column; gap: 18px; }
 
         .field-wrap {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-          position: relative;
+          display: flex; flex-direction: column; gap: 0; position: relative;
           animation: slideUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
         }
         .field-wrap:nth-child(1) { animation-delay: 0.25s; }
@@ -176,167 +142,124 @@ export default function SignUpScreen() {
         .field-wrap:nth-child(3) { animation-delay: 0.35s; }
 
         .field-label {
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.35);
-          margin-bottom: 8px;
-          transition: color 0.2s;
-          font-family: 'DM Mono', monospace;
+          font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+          text-transform: uppercase; color: rgba(255,255,255,0.35);
+          margin-bottom: 8px; transition: color 0.2s; font-family: 'DM Mono', monospace;
         }
         .field-label.active { color: #fb923c; }
 
-        .input-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
 
         .field-icon {
-          position: absolute;
-          left: 16px;
-          color: rgba(255,255,255,0.2);
-          transition: color 0.2s;
-          pointer-events: none;
-          display: flex;
-          align-items: center;
+          position: absolute; left: 16px; color: rgba(255,255,255,0.2);
+          transition: color 0.2s; pointer-events: none; display: flex; align-items: center;
         }
         .field-icon.active { color: #fb923c; }
 
         .field-input {
-          width: 100%;
-          background: rgba(255,255,255,0.05);
-          border: 1.5px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          padding: 15px 48px 15px 46px;
-          font-size: 15px;
-          font-family: 'Sora', sans-serif;
-          font-weight: 400;
-          color: #ffffff;
-          outline: none;
+          width: 100%; background: rgba(255,255,255,0.05);
+          border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px;
+          padding: 15px 48px 15px 46px; font-size: 15px; font-family: 'Sora', sans-serif;
+          font-weight: 400; color: #fff; outline: none;
           transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-          -webkit-appearance: none;
-          appearance: none;
+          -webkit-appearance: none; appearance: none;
         }
         .field-input::placeholder { color: rgba(255,255,255,0.2); }
         .field-input:focus {
-          border-color: rgba(251,146,60,0.5);
-          background: rgba(251,146,60,0.04);
+          border-color: rgba(251,146,60,0.5); background: rgba(251,146,60,0.04);
           box-shadow: 0 0 0 4px rgba(251,146,60,0.08);
         }
-        .field-input.has-error {
-          border-color: rgba(244,63,94,0.5);
-          background: rgba(244,63,94,0.04);
-        }
-        .field-input.has-error:focus {
-          box-shadow: 0 0 0 4px rgba(244,63,94,0.08);
-        }
+        .field-input.has-error { border-color: rgba(244,63,94,0.5); background: rgba(244,63,94,0.04); }
+        .field-input.has-error:focus { box-shadow: 0 0 0 4px rgba(244,63,94,0.08); }
 
         .pw-toggle {
-          position: absolute;
-          right: 14px;
-          background: none;
-          border: none;
-          color: rgba(255,255,255,0.25);
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s;
+          position: absolute; right: 14px; background: none; border: none;
+          color: rgba(255,255,255,0.25); cursor: pointer; padding: 4px;
+          display: flex; align-items: center; transition: color 0.2s;
           -webkit-tap-highlight-color: transparent;
         }
         .pw-toggle:hover { color: rgba(255,255,255,0.6); }
 
         .error-msg {
-          font-size: 12px;
-          color: #f87171;
-          margin-top: 6px;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-weight: 500;
+          font-size: 12px; color: #f87171; margin-top: 6px;
+          display: flex; align-items: center; gap: 5px; font-weight: 500;
         }
 
-        .submit-btn {
-          margin-top: 8px;
-          width: 100%;
-          padding: 17px;
-          background: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
-          border: none;
+        /* ── Auth error banner ── */
+        .auth-error {
+          display: flex; align-items: flex-start; gap: 11px;
+          padding: 14px 16px;
+          background: rgba(244,63,94,0.08);
+          border: 1px solid rgba(244,63,94,0.22);
           border-radius: 14px;
-          font-size: 15px;
-          font-family: 'Sora', sans-serif;
-          font-weight: 600;
-          color: #ffffff;
-          cursor: pointer;
-          letter-spacing: 0.01em;
-          position: relative;
-          overflow: hidden;
+          animation: errorShake 0.4s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        @keyframes errorShake {
+          0%   { opacity: 0; transform: translateX(-6px); }
+          40%  { transform: translateX(5px); }
+          70%  { transform: translateX(-3px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .auth-error-icon {
+          width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+          background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.2);
+          display: flex; align-items: center; justify-content: center; color: #f43f5e;
+          margin-top: 1px;
+        }
+        .auth-error-body { flex: 1; min-width: 0; }
+        .auth-error-title { font-size: 13px; font-weight: 700; color: #f87171; margin-bottom: 3px; }
+        .auth-error-msg { font-size: 12px; color: rgba(248,113,113,0.7); line-height: 1.5; word-break: break-word; }
+        .auth-error-close {
+          background: none; border: none; color: rgba(244,63,94,0.4);
+          cursor: pointer; padding: 2px; display: flex; align-items: center;
+          transition: color 0.2s; flex-shrink: 0; align-self: flex-start;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .auth-error-close:hover { color: #f43f5e; }
+
+        .submit-btn {
+          margin-top: 8px; width: 100%; padding: 17px;
+          background: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
+          border: none; border-radius: 14px; font-size: 15px; font-family: 'Sora', sans-serif;
+          font-weight: 600; color: #fff; cursor: pointer; letter-spacing: 0.01em;
+          position: relative; overflow: hidden;
           transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
           box-shadow: 0 8px 32px rgba(251,146,60,0.25);
           -webkit-tap-highlight-color: transparent;
           animation: slideUp 0.6s 0.4s cubic-bezier(0.22,1,0.36,1) both;
         }
-        .submit-btn:hover:not(:disabled) {
-          opacity: 0.92;
-          transform: translateY(-1px);
-          box-shadow: 0 12px 40px rgba(251,146,60,0.35);
-        }
+        .submit-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 12px 40px rgba(251,146,60,0.35); }
         .submit-btn:active:not(:disabled) { transform: scale(0.98); }
         .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .submit-btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
+          content: ''; position: absolute; inset: 0;
           background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
           pointer-events: none;
         }
 
-        .btn-inner {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
+        .btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
         .spinner {
-          width: 18px; height: 18px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
+          width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .divider {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-top: 4px;
+          display: flex; align-items: center; gap: 12px; margin-top: 4px;
           animation: slideUp 0.6s 0.45s cubic-bezier(0.22,1,0.36,1) both;
         }
         .divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
         .divider-text { font-size: 12px; color: rgba(255,255,255,0.2); font-weight: 500; }
 
         .signin-link {
-          text-align: center;
-          font-size: 14px;
-          color: rgba(255,255,255,0.35);
+          text-align: center; font-size: 14px; color: rgba(255,255,255,0.35);
           animation: slideUp 0.6s 0.5s cubic-bezier(0.22,1,0.36,1) both;
         }
-        .signin-link a {
-          color: #fb923c;
-          text-decoration: none;
-          font-weight: 600;
-          transition: opacity 0.2s;
-        }
+        .signin-link a { color: #fb923c; text-decoration: none; font-weight: 600; transition: opacity 0.2s; }
         .signin-link a:hover { opacity: 0.75; }
 
         .terms {
-          text-align: center;
-          font-size: 11px;
-          color: rgba(255,255,255,0.18);
-          line-height: 1.6;
+          text-align: center; font-size: 11px; color: rgba(255,255,255,0.18); line-height: 1.6;
           animation: slideUp 0.6s 0.55s cubic-bezier(0.22,1,0.36,1) both;
         }
         .terms a { color: rgba(255,255,255,0.35); text-decoration: underline; text-underline-offset: 2px; }
@@ -441,6 +364,31 @@ export default function SignUpScreen() {
               )}
             </div>
 
+            {/* ── Auth error banner ── */}
+            {authError && (
+              <div className="auth-error">
+                <div className="auth-error-icon">
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <div className="auth-error-body">
+                  <div className="auth-error-title">Sign up failed</div>
+                  <div className="auth-error-msg">{authError}</div>
+                </div>
+                <button
+                  type="button"
+                  className="auth-error-close"
+                  onClick={() => setAuthError(null)}
+                  aria-label="Dismiss"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
             <button type="submit" disabled={isSubmitting} className="submit-btn">
               <span className="btn-inner">
                 {isSubmitting ? (
@@ -456,17 +404,17 @@ export default function SignUpScreen() {
             </button>
           </form>
 
-          <div className="divider" style={{marginTop: '24px'}}>
+          <div className="divider" style={{ marginTop: '24px' }}>
             <div className="divider-line" />
             <span className="divider-text">or</span>
             <div className="divider-line" />
           </div>
 
-          <p className="signin-link" style={{marginTop: '16px'}}>
+          <p className="signin-link" style={{ marginTop: '16px' }}>
             Already have an account? <Link to="/sign-in">Sign In</Link>
           </p>
 
-          <p className="terms" style={{marginTop: '20px'}}>
+          <p className="terms" style={{ marginTop: '20px' }}>
             By signing up, you agree to our{' '}
             <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
           </p>

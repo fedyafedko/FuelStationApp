@@ -43,6 +43,15 @@ public class FuelRequestController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("send-car")]
+    public async Task<IActionResult> SendCar(Guid requestId)
+    {
+        var userId = HttpContext.GetUserId();
+        await _fuelRequestService.SendCarToRequestAsync(userId, requestId);
+
+        return Ok();
+    }
+
     [HttpPut("complete")]
     public async Task<IActionResult> Complete(Guid requestId)
     {

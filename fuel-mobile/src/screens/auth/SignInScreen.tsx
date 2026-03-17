@@ -17,6 +17,7 @@ export default function SignInScreen() {
   const setTokens = useAuthStore((s) => s.setTokens);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     register,
@@ -25,13 +26,17 @@ export default function SignInScreen() {
   } = useForm<SignInDTO>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (data: SignInDTO) => {
+    setAuthError(null);
     try {
       const res = await authApi.signIn(data);
       await setTokens(res.data.accessToken, res.data.refreshToken);
       navigate('/');
     } catch (err: unknown) {
-      if (err instanceof Error) console.error('Error:', err.message);
-      else console.error('Unknown error', err);
+      if (err instanceof Error) {
+        setAuthError(err.message);
+      } else {
+        setAuthError('Something went wrong. Please try again.');
+      }
     }
   };
 
@@ -205,6 +210,43 @@ export default function SignInScreen() {
         }
         .forgot-link:hover { color: #fb923c; }
 
+        /* ── Auth error banner ── */
+        .auth-error {
+          display: flex; align-items: flex-start; gap: 11px;
+          padding: 14px 16px;
+          background: rgba(244,63,94,0.08);
+          border: 1px solid rgba(244,63,94,0.22);
+          border-radius: 14px;
+          animation: errorShake 0.4s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        @keyframes errorShake {
+          0%   { opacity: 0; transform: translateX(-6px); }
+          40%  { transform: translateX(5px); }
+          70%  { transform: translateX(-3px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .auth-error-icon {
+          width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+          background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.2);
+          display: flex; align-items: center; justify-content: center; color: #f43f5e;
+          margin-top: 1px;
+        }
+        .auth-error-body { flex: 1; min-width: 0; }
+        .auth-error-title {
+          font-size: 13px; font-weight: 700; color: #f87171; margin-bottom: 3px;
+        }
+        .auth-error-msg {
+          font-size: 12px; color: rgba(248,113,113,0.7); line-height: 1.5;
+          word-break: break-word;
+        }
+        .auth-error-close {
+          background: none; border: none; color: rgba(244,63,94,0.4);
+          cursor: pointer; padding: 2px; display: flex; align-items: center;
+          transition: color 0.2s; flex-shrink: 0; align-self: flex-start;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .auth-error-close:hover { color: #f43f5e; }
+
         .submit-btn {
           margin-top: 4px; width: 100%; padding: 17px;
           background: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
@@ -263,7 +305,6 @@ export default function SignInScreen() {
           display: flex; align-items: center; gap: 5px;
           font-size: 11px; color: rgba(255,255,255,0.2); font-weight: 500;
         }
-        .trust-item svg { color: rgba(255,255,255,0.15); }
       `}</style>
 
       <div className="signin-root">
@@ -339,9 +380,30 @@ export default function SignInScreen() {
               )}
             </div>
 
-            <div className="forgot-row">
-              <a href="#" className="forgot-link">Forgot password?</a>
-            </div>
+            {/* ── Auth error banner ── */}
+            {authError && (
+              <div className="auth-error">
+                <div className="auth-error-icon">
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <div className="auth-error-body">
+                  <div className="auth-error-title">Sign in failed</div>
+                  <div className="auth-error-msg">{authError}</div>
+                </div>
+                <button
+                  type="button"
+                  className="auth-error-close"
+                  onClick={() => setAuthError(null)}
+                  aria-label="Dismiss"
+                >
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
 
             <button type="submit" disabled={isSubmitting} className="submit-btn">
               <span className="btn-inner">

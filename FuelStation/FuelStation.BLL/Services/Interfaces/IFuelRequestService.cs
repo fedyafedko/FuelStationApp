@@ -9,4 +9,5 @@ public interface IFuelRequestService
     Task<FuelRequestDTO> CreateAsync(Guid userId, CreateFuelRequestDTO dto);
     Task<FuelRequestDTO> GetByIdAsync(Guid requestId);
     Task PaidAsync(Guid userId, Guid requestId);
+    Task SendCarToRequestAsync(Guid userId, Guid requestId);
 }

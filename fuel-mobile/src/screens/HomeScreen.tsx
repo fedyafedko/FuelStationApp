@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
-import UserLocationMap from '../components/UserLocationMap';
+import { UserLocationMap } from '../components/UserLocationMap';
 import type { CarDTO, CreateFuelRequestDTO } from '../types/api.types';
 import axiosInstance from '../api/axiosInstance';
 import CarSelect from '../components/CarSelect';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Geolocation as CapacitorGeolocation } from '@capacitor/geolocation';
 
-const DEFAULT_LOCATION = { latitude: 50.447925998975954, longitude: 30.452488349831874 };
+const FALLBACK_LOCATION = { latitude: 50.4491, longitude: 30.4456 };
 
 interface PickedLocation { latitude: number; longitude: number }
 
@@ -23,10 +24,16 @@ function LocationPickerMap({ value, onChange }: { value: PickedLocation; onChang
       center: [value.latitude, value.longitude],
       zoom: 15,
       zoomControl: false,
+      dragging: true,
     });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((map as any).tap) (map as any).tap.disable();
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 100);
 
     const icon = L.divIcon({
       className: '',
@@ -41,14 +48,24 @@ function LocationPickerMap({ value, onChange }: { value: PickedLocation; onChang
       iconAnchor: [18, 36],
     });
 
-    const marker = L.marker([value.latitude, value.longitude], { icon, draggable: true }).addTo(map);
+    const marker = L.marker([value.latitude, value.longitude], {
+      icon, draggable: true, autoPan: true,
+    }).addTo(map);
+
     markerRef.current = marker;
 
+    marker.on('dragstart', () => {
+      if (containerRef.current) containerRef.current.style.touchAction = 'none';
+    });
     marker.on('dragend', () => {
+      if (containerRef.current) containerRef.current.style.touchAction = '';
       const { lat, lng } = marker.getLatLng();
       onChange({ latitude: lat, longitude: lng });
     });
-
+    marker.on('drag', () => {
+      const { lat, lng } = marker.getLatLng();
+      onChange({ latitude: lat, longitude: lng });
+    });
     map.on('click', (e: L.LeafletMouseEvent) => {
       const { lat, lng } = e.latlng;
       marker.setLatLng([lat, lng]);
@@ -56,28 +73,43 @@ function LocationPickerMap({ value, onChange }: { value: PickedLocation; onChang
     });
 
     mapRef.current = map;
-
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
-  const goToCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const loc = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-        onChange(loc);
-        mapRef.current?.setView([loc.latitude, loc.longitude], 16);
-        markerRef.current?.setLatLng([loc.latitude, loc.longitude]);
-      },
-      () => alert('Could not get your location'),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+  const goToCurrentLocation = async () => {
+    try {
+      await CapacitorGeolocation.requestPermissions();
+      const position = await CapacitorGeolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const loc = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+      onChange(loc);
+      mapRef.current?.setView([loc.latitude, loc.longitude], 16);
+      markerRef.current?.setLatLng([loc.latitude, loc.longitude]);
+    } catch {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => {
+          const loc = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+          onChange(loc);
+          mapRef.current?.setView([loc.latitude, loc.longitude], 16);
+          markerRef.current?.setLatLng([loc.latitude, loc.longitude]);
+        },
+        () => alert('Could not get your location'),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
   };
 
   return (
-    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1.5px solid rgba(255,255,255,0.1)' }}>
-      <div ref={containerRef} style={{ height: 240, width: '100%' }} />
+    <div
+      style={{
+        position: 'relative', borderRadius: 16, overflow: 'hidden',
+        border: '1.5px solid rgba(255,255,255,0.1)',
+        isolation: 'isolate', zIndex: 0,
+      }}
+      onTouchStart={e => e.stopPropagation()}
+      onTouchMove={e => e.stopPropagation()}
+    >
+      <div ref={containerRef} style={{ height: 240, width: '100%', touchAction: 'none' }} />
 
-      {/* Current location btn */}
       <button
         type="button"
         onClick={goToCurrentLocation}
@@ -102,7 +134,6 @@ function LocationPickerMap({ value, onChange }: { value: PickedLocation; onChang
         Use my location
       </button>
 
-      {/* Hint */}
       <div style={{
         position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
         background: 'rgba(14,14,21,0.85)', backdropFilter: 'blur(10px)',
@@ -120,15 +151,47 @@ function LocationPickerMap({ value, onChange }: { value: PickedLocation; onChang
 export default function HomeScreen() {
   const logout = useAuthStore((s) => s.logout);
 
-  const [showFuelModal, setShowFuelModal]       = useState(false);
-  const [cars, setCars]                         = useState<CarDTO[]>([]);
-  const [selectedCarId, setSelectedCarId]       = useState<string>('');
-  const [requestedLiters, setRequestedLiters]   = useState<number>(0);
-  const [loading, setLoading]                   = useState(false);
-  const [showUserMenu, setShowUserMenu]         = useState(false);
-  const [location, setLocation]                 = useState<PickedLocation>(DEFAULT_LOCATION);
+  const [showFuelModal, setShowFuelModal]           = useState(false);
+  const [cars, setCars]                             = useState<CarDTO[]>([]);
+  const [selectedCarId, setSelectedCarId]           = useState<string>('');
+  const [requestedLiters, setRequestedLiters]       = useState<number>(0);
+  const [loading, setLoading]                       = useState(false);
+  const [showUserMenu, setShowUserMenu]             = useState(false);
+  const [location, setLocation]                     = useState<PickedLocation>(FALLBACK_LOCATION);
+  const [locationReady, setLocationReady]           = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [step, setStep]                         = useState<1 | 2>(1); // modal steps
+  const [step, setStep]                             = useState<1 | 2>(1);
+
+  // Get real position on mount
+  useEffect(() => {
+    const getCurrentLocation = async () => {
+      try {
+        await CapacitorGeolocation.requestPermissions();
+        const position = await CapacitorGeolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 20000,
+        });
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      } catch {
+        navigator.geolocation?.getCurrentPosition(
+          (pos) => {
+            setLocation({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            });
+          },
+          () => console.warn('Could not get location, using fallback'),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } finally {
+        setLocationReady(true);
+      }
+    };
+    getCurrentLocation();
+  }, []);
 
   const handleLogout = async () => { await logout(); window.location.href = '/sign-in'; };
 
@@ -155,7 +218,7 @@ export default function HomeScreen() {
   };
 
   const coordLabel = `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
-  const isDefaultLoc = location.latitude === DEFAULT_LOCATION.latitude && location.longitude === DEFAULT_LOCATION.longitude;
+  const isDefaultLoc = location.latitude === FALLBACK_LOCATION.latitude && location.longitude === FALLBACK_LOCATION.longitude;
 
   return (
     <>
@@ -165,16 +228,16 @@ export default function HomeScreen() {
 
         .home-root {
           font-family: 'Sora', sans-serif; min-height: 100dvh; background: #0a0a0f;
-          display: flex; flex-direction: column; position: relative; overflow: hidden;
+          display: flex; flex-direction: column; position: relative;
         }
 
-        /* header */
         .header {
           position: relative; z-index: 50;
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 20px;
           background: rgba(10,10,15,0.88); backdrop-filter: blur(20px);
           border-bottom: 1px solid rgba(255,255,255,0.06);
+          flex-shrink: 0;
         }
         .header-logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon {
@@ -218,9 +281,10 @@ export default function HomeScreen() {
         .menu-item.danger:hover { background: rgba(244,63,94,0.1); color: #f43f5e; }
         .menu-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0; }
 
-        /* map */
-        .map-wrapper { flex: 1; position: relative; min-height: 0; }
-        .map-wrapper > * { height: 100% !important; min-height: 300px; }
+        .map-wrapper {
+          flex: 1; position: relative; min-height: 300px;
+          isolation: isolate;
+        }
         .map-overlay-top {
           position: absolute; top: 14px; left: 14px; right: 14px;
           display: flex; justify-content: space-between; align-items: flex-start;
@@ -237,12 +301,13 @@ export default function HomeScreen() {
           box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
           animation: pulseGreen 2s ease-in-out infinite;
         }
+        .location-dot.loading { background: #fb923c; box-shadow: 0 0 0 3px rgba(251,146,60,0.2); animation: pulseOrange 1s ease-in-out infinite; }
         @keyframes pulseGreen { 0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,0.2)} 50%{box-shadow:0 0 0 7px rgba(34,197,94,0.06)} }
+        @keyframes pulseOrange { 0%,100%{box-shadow:0 0 0 3px rgba(251,146,60,0.2)} 50%{box-shadow:0 0 0 7px rgba(251,146,60,0.06)} }
         .location-text { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.7); }
 
-        /* bottom sheet */
         .bottom-sheet {
-          position: relative; z-index: 20; background: #0e0e15;
+          flex-shrink: 0; position: relative; z-index: 20; background: #0e0e15;
           border-top: 1px solid rgba(255,255,255,0.07); padding: 20px 20px 32px;
         }
         .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); margin: 0 auto 20px; }
@@ -273,7 +338,6 @@ export default function HomeScreen() {
         .action-sub   { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; font-family: 'DM Mono', monospace; }
         .chevron-right { color: rgba(255,255,255,0.2); flex-shrink: 0; }
 
-        /* modal */
         .modal-overlay {
           position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
           display: flex; align-items: flex-end; justify-content: center; z-index: 200;
@@ -301,12 +365,8 @@ export default function HomeScreen() {
         .modal-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
         .modal-sub   { font-size: 13px; color: rgba(255,255,255,0.35); margin-top: 2px; }
 
-        /* step indicator */
         .step-indicator { display: flex; align-items: center; gap: 6px; margin-bottom: 24px; }
-        .step-dot {
-          flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08);
-          transition: background 0.3s;
-        }
+        .step-dot { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.3s; }
         .step-dot.active { background: linear-gradient(90deg,#fb923c,#f43f5e); }
 
         .modal-form { display: flex; flex-direction: column; gap: 18px; }
@@ -316,7 +376,6 @@ export default function HomeScreen() {
           margin-bottom: 8px; font-family: 'DM Mono', monospace;
         }
 
-        /* liters */
         .liters-row { display: flex; align-items: center; gap: 10px; }
         .liters-btn {
           width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
@@ -337,7 +396,6 @@ export default function HomeScreen() {
         }
         .liters-input:focus { border-color: rgba(251,146,60,0.5); background: rgba(251,146,60,0.04); box-shadow: 0 0 0 4px rgba(251,146,60,0.08); }
 
-        /* quick liters presets */
         .liters-presets { display: flex; gap: 7px; margin-top: 10px; flex-wrap: wrap; }
         .liters-preset {
           padding: 6px 14px; border-radius: 100px;
@@ -349,7 +407,6 @@ export default function HomeScreen() {
         .liters-preset:hover { background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.3); color: #fb923c; }
         .liters-preset.active { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.35); color: #fb923c; }
 
-        /* location row */
         .loc-row {
           display: flex; align-items: center; gap: 10px; padding: 13px 14px;
           background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08);
@@ -374,7 +431,6 @@ export default function HomeScreen() {
           font-family: 'DM Mono', monospace; letter-spacing: 0.04em;
         }
 
-        /* order summary */
         .summary-card {
           background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
           border-radius: 14px; overflow: hidden; margin-bottom: 4px;
@@ -387,7 +443,6 @@ export default function HomeScreen() {
         .summary-key { font-size: 12px; color: rgba(255,255,255,0.35); font-family: 'DM Mono', monospace; }
         .summary-val { font-size: 13px; font-weight: 600; color: #fff; }
 
-        /* modal actions */
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-btn-primary {
           flex: 1; padding: 16px; background: linear-gradient(135deg,#fb923c,#f43f5e);
@@ -461,11 +516,13 @@ export default function HomeScreen() {
 
         {/* Map */}
         <div className="map-wrapper">
-          <UserLocationMap height="100%" />
+          <UserLocationMap value={location} />
           <div className="map-overlay-top">
             <div className="location-pill">
-              <div className="location-dot" />
-              <span className="location-text">Kyiv, Ukraine</span>
+              <div className={`location-dot${locationReady ? '' : ' loading'}`} />
+              <span className="location-text">
+                {locationReady ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Getting location…'}
+              </span>
             </div>
           </div>
         </div>
@@ -507,13 +564,12 @@ export default function HomeScreen() {
         </div>
       </div>
 
-      {/* ── Fuel Order Modal ── */}
+      {/* Fuel Order Modal */}
       {showFuelModal && (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowFuelModal(false); }}>
           <div className="modal-sheet">
             <div className="modal-handle" />
 
-            {/* Header */}
             <div className="modal-header">
               <div className="modal-icon">
                 <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth="2.2">
@@ -526,13 +582,11 @@ export default function HomeScreen() {
               </div>
             </div>
 
-            {/* Step indicator */}
             <div className="step-indicator">
               <div className={`step-dot ${step >= 1 ? 'active' : ''}`} />
               <div className={`step-dot ${step >= 2 ? 'active' : ''}`} />
             </div>
 
-            {/* ── Step 1: vehicle + liters + location ── */}
             {step === 1 && (
               <div className="modal-form">
                 <div>
@@ -582,85 +636,68 @@ export default function HomeScreen() {
                     </div>
                     <span className="loc-change">{showLocationPicker ? 'CLOSE ↑' : 'CHANGE →'}</span>
                   </div>
-
                   {showLocationPicker && (
                     <div style={{ marginTop: 10 }}>
-                      <LocationPickerMap
-                        value={location}
-                        onChange={(loc) => setLocation(loc)}
-                      />
+                      <LocationPickerMap value={location} onChange={setLocation} />
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* ── Step 2: summary ── */}
             {step === 2 && (
-            <div>
-              <div className="summary-card">
-                {(() => {
-                  const car = cars.find(c => c.id === selectedCarId);
-                  const price = requestedLiters * 50;
-                  return (
-                    <>
-                      <div className="summary-row">
-                        <span className="summary-key">Vehicle</span>
-                        <span className="summary-val">{car ? `${car.mark} ${car.model}` : '—'}</span>
-                      </div>
-                      <div className="summary-row">
-                        <span className="summary-key">Plate</span>
-                        <span className="summary-val" style={{ fontFamily: "'DM Mono',monospace", letterSpacing: '0.06em' }}>{car?.carNumber ?? '—'}</span>
-                      </div>
-                      <div className="summary-row">
-                        <span className="summary-key">Amount</span>
-                        <span className="summary-val" style={{ color: '#fb923c' }}>{requestedLiters} L</span>
-                      </div>
-                      <div className="summary-row">
-                        <span className="summary-key">Price</span>
-                        <span className="summary-val" style={{
-                          display: 'flex', alignItems: 'center', gap: 6,
-                        }}>
-                          <span style={{
-                            fontSize: 11, color: 'rgba(255,255,255,0.3)',
-                            fontFamily: "'DM Mono',monospace",
-                          }}>
-                            {requestedLiters} × ₴50
+              <div>
+                <div className="summary-card">
+                  {(() => {
+                    const car = cars.find(c => c.id === selectedCarId);
+                    const price = requestedLiters * 50;
+                    return (
+                      <>
+                        <div className="summary-row">
+                          <span className="summary-key">Vehicle</span>
+                          <span className="summary-val">{car ? `${car.mark} ${car.model}` : '—'}</span>
+                        </div>
+                        <div className="summary-row">
+                          <span className="summary-key">Plate</span>
+                          <span className="summary-val" style={{ fontFamily: "'DM Mono',monospace", letterSpacing: '0.06em' }}>{car?.carNumber ?? '—'}</span>
+                        </div>
+                        <div className="summary-row">
+                          <span className="summary-key">Amount</span>
+                          <span className="summary-val" style={{ color: '#fb923c' }}>{requestedLiters} L</span>
+                        </div>
+                        <div className="summary-row">
+                          <span className="summary-key">Price</span>
+                          <span className="summary-val" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: "'DM Mono',monospace" }}>
+                              {requestedLiters} × ₴50
+                            </span>
+                            <span style={{
+                              background: 'linear-gradient(135deg, #fb923c, #f43f5e)',
+                              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                              backgroundClip: 'text', fontWeight: 700, fontSize: 16,
+                            }}>
+                              ₴{price.toLocaleString()}
+                            </span>
                           </span>
-                          <span style={{
-                            background: 'linear-gradient(135deg, #fb923c, #f43f5e)',
-                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text', fontWeight: 700, fontSize: 16,
-                          }}>
-                            ₴{price.toLocaleString()}
-                          </span>
-                        </span>
-                      </div>
-                      <div className="summary-row">
-                        <span className="summary-key">Location</span>
-                        <span className="summary-val" style={{ fontFamily: "'DM Mono',monospace", fontSize: 11 }}>{coordLabel}</span>
-                      </div>
-                    </>
-                  );
-                })()}
+                        </div>
+                        <div className="summary-row">
+                          <span className="summary-key">Location</span>
+                          <span className="summary-val" style={{ fontFamily: "'DM Mono',monospace", fontSize: 11 }}>{coordLabel}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <LocationPickerMap value={location} onChange={setLocation} />
+                </div>
               </div>
-              
-              {/* mini map preview */}
-              <div style={{ marginTop: 12 }}>
-                <LocationPickerMap value={location} onChange={setLocation} />
-              </div>
-            </div>
-          )}
+            )}
 
-            {/* Actions */}
             <div className="modal-actions">
-              <button
-                className="modal-btn-secondary"
-                onClick={() => step === 1 ? setShowFuelModal(false) : setStep(1)}
-              >
+              <button className="modal-btn-secondary" onClick={() => step === 1 ? setShowFuelModal(false) : setStep(1)}>
                 {step === 1 ? 'Cancel' : '← Back'}
               </button>
-
               {step === 1 ? (
                 <button
                   className="modal-btn-primary"
@@ -673,11 +710,7 @@ export default function HomeScreen() {
                   </svg>
                 </button>
               ) : (
-                <button
-                  className="modal-btn-primary"
-                  onClick={handleCreateFuelRequest}
-                  disabled={loading}
-                >
+                <button className="modal-btn-primary" onClick={handleCreateFuelRequest} disabled={loading}>
                   {loading ? <><span className="btn-spinner" /> Creating…</> : <>Confirm Order ⚡</>}
                 </button>
               )}

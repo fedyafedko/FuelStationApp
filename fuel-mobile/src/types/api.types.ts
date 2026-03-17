@@ -20,11 +20,13 @@ export interface RefreshTokenDTO {
   refreshToken: string;
 }
 
-export enum FuelType {
-  Petrol = 0,
-  Diesel = 1,
-  Gas = 2,
-}
+export const FuelType = {
+  Petrol: 0,
+  Diesel: 1,
+  Gas: 2,
+} as const;
+
+export type FuelType = typeof FuelType[keyof typeof FuelType];
 
 export interface CreateCarDTO {
   mark: string;
@@ -35,7 +37,7 @@ export interface CreateCarDTO {
   fuelType: FuelType;
 }
 
-export interface UpdateCarDTO extends CreateCarDTO {}
+export type UpdateCarDTO = CreateCarDTO
 
 export interface CarDTO extends CreateCarDTO {
   id: string;
@@ -67,7 +69,7 @@ export interface UserDTO {
 // src/types/api.types.ts
 
 // Статус замовлення
-export type RequestStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type RequestStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 // Локація
 export interface LocationDTO {

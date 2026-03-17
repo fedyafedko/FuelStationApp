@@ -9,4 +9,5 @@ public enum RequestStatus
     RobotUnavailable = 4,
     WaitingForPayment = 5,
     StartFueling = 6,
+    SendCar = 7
 }
