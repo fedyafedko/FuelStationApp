@@ -1,14 +1,14 @@
-// src/router/AppRouter.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 import SignInScreen from '../screens/auth/SignInScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import HomeScreen from '../screens/HomeScreen';
-import FuelRequestWaitingScreen from '../screens/FuelRequestWaitingScreen';
+import FuelRequestWaitingScreen from '../screens/fuelRequest/FuelRequestWaitingScreen';
 
 import ProtectedRoute from './ProtectedRoute';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import HistoryScreen from '../screens/fuelRequest/HistoryScreen';
 
 export default function AppRouter() {
   const { isAuthenticated, _hasRehydrated } = useAuthStore();
@@ -20,7 +20,6 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
         <Route
           path="/sign-in"
           element={
@@ -34,7 +33,6 @@ export default function AppRouter() {
           }
         />
 
-        {/* Protected routes */}
         <Route
           path="/"
           element={
@@ -44,7 +42,6 @@ export default function AppRouter() {
           }
         />
 
-        {/* Fuel request waiting page */}
         <Route
           path="/fuel-request-waiting/:requestId"
           element={
@@ -63,7 +60,15 @@ export default function AppRouter() {
           }
         />
 
-        {/* Fallback */}
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <HistoryScreen />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="*" element={<div>Page not found</div>} />
       </Routes>
     </BrowserRouter>

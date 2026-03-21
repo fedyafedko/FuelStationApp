@@ -111,7 +111,7 @@ public class FuelRequestService : IFuelRequestService
         if (request.Car.UserId != userId)
             throw new ForbiddenException("Invalid user for this request");
 
-        if (request.Status != RequestStatus.InProgress)
+        if (request.Status != RequestStatus.StartFueling)
             throw new InvalidOperationException("Fueling is not in progress");
 
         if (request.CompletedAt != null)
@@ -146,5 +146,35 @@ public class FuelRequestService : IFuelRequestService
         request.Status = RequestStatus.SendCar;
 
         await _fuelRequestRepository.UpdateAsync(request);
+    }
+
+    public async Task CancelRequestAsync(Guid userId, Guid requestId, CancelRequestDTO dto)
+    {
+        var request = await _fuelRequestRepository
+           .Query()
+           .Include(x => x.Car)
+           .FirstOrDefaultAsync(x => x.Id == requestId)
+           ?? throw new NotFoundException("Request not found");
+
+        if (request.Car.UserId != userId)
+            new ForbiddenException("Invalid user for this request");
+
+        request.Status = RequestStatus.Cancelled;
+        request.CancelReason = dto.Reason;
+
+        await _fuelRequestRepository.UpdateAsync(request);
+    }
+
+    public async Task<List<FuelRequestDTO>> GetFuelRequestsAsync(Guid userId)
+    {
+        var requests = await _fuelRequestRepository
+            .Query()
+            .Include(x => x.Car)
+            .ThenInclude(x => x.User)
+            .Include(x => x.Route)
+            .Where(x => x.Car.UserId == userId && (x.Status == RequestStatus.Completed || x.Status == RequestStatus.Cancelled || x.Status == RequestStatus.SendCar))
+            .ToListAsync();
+
+        return _mapper.Map<List<FuelRequestDTO>>(requests);
     }
 }

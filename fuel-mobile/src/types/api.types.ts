@@ -65,13 +65,8 @@ export interface UserDTO {
   role?: string;
 }
 
-
-// src/types/api.types.ts
-
-// Статус замовлення
 export type RequestStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-// Локація
 export interface LocationDTO {
   latitude: number;
   longitude: number;
@@ -84,18 +79,20 @@ export interface RouteDTO {
   startLng: number;
   endLat: number;
   endLng: number;
-  distance: number;      // метри
-  duration: number;      // секунди
-  geometry: string;      // закодований polyline
+  distance: number;
+  duration: number;
+  geometry: string;
   createdAt: string;
 }
 
 export interface FuelRequestDTO {
-  id: string;                // Guid
-  carId: string;             // Guid машини
-  status: RequestStatus;     // Статус замовлення
-  requestedLiters: number;   // Кількість літрів
-  totalPrice: number;        // Загальна ціна
-  createAt: string;          // Дата створення (ISO string)
-  route?: RouteDTO;          // маршрут робота (опціонально)
+  id: string;
+  carId: string;
+  status: RequestStatus;
+  requestedLiters: number;
+  totalPrice: number;
+  createAt: string;
+  cancelReason: string;      
+  route?: RouteDTO;
+  car: CarDTO;
 }

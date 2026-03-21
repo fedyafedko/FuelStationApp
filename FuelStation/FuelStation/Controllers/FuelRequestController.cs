@@ -61,11 +61,28 @@ public class FuelRequestController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("cancel")]
+    public async Task<IActionResult> Cancel(Guid requestId, [FromBody] CancelRequestDTO dto)
+    {
+        var userId = HttpContext.GetUserId();
+        await _fuelRequestService.CancelRequestAsync(userId, requestId, dto);
+
+        return Ok();
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetById(Guid requestId)
     {
         var result = await _fuelRequestService.GetByIdAsync(requestId);
+
+        return Ok(result);
+    }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory()
+    {
+        var userId = HttpContext.GetUserId();
+        var result = await _fuelRequestService.GetFuelRequestsAsync(userId);
 
         return Ok(result);
     }
