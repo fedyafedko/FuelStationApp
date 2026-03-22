@@ -177,4 +177,16 @@ public class FuelRequestService : IFuelRequestService
 
         return _mapper.Map<List<FuelRequestDTO>>(requests);
     }
+
+    public async Task<List<FuelRequestDTO>> GetAllFuelRequestsAsync()
+    {
+        var requests = await _fuelRequestRepository
+            .Query()
+            .Include(x => x.Car)
+            .ThenInclude(x => x.User)
+            .Include(x => x.Route)
+            .ToListAsync();
+
+        return _mapper.Map<List<FuelRequestDTO>>(requests);
+    }
 }

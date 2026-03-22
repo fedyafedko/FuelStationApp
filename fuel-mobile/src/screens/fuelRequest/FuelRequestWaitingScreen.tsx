@@ -149,7 +149,7 @@ export default function FuelRequestWaitingScreen() {
       if (el >= 15 * 60) {
         clearInterval(timer);
         setPaymentTimedOut(true);
-        fuelRequestApi.paid(requestId ?? '').catch(console.error);
+        fuelRequestApi.cancel(requestId ?? '', '').catch(console.error);
       }
     }, 1000);
     return () => clearInterval(timer);

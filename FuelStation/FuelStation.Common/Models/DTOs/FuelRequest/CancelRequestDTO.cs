@@ -2,5 +2,5 @@
 
 public class CancelRequestDTO
 {
-    public string Reason { get; set; }
+    public string? Reason { get; set; }
 }

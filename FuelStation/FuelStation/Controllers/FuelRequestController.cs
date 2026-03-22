@@ -86,4 +86,12 @@ public class FuelRequestController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _fuelRequestService.GetAllFuelRequestsAsync();
+
+        return Ok(result);
+    }
 }
