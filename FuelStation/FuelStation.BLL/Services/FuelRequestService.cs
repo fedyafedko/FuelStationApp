@@ -3,9 +3,11 @@ using FuelStation.BLL.Services.Interfaces;
 using FuelStation.Common.Enums;
 using FuelStation.Common.Exceptions;
 using FuelStation.Common.Models.DTOs.FuelRequest;
+using FuelStation.Common.Models.Routes;
 using FuelStation.DAL.Entities;
 using FuelStation.DAL.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace FuelStation.BLL.Services;
 
@@ -32,6 +34,7 @@ public class FuelRequestService : IFuelRequestService
     {
         var request = await _fuelRequestRepository
             .Query()
+            .Include(x => x.Location)
             .Include(x => x.Route)
             .FirstOrDefaultAsync(x => x.Id == requestId);
 
@@ -123,7 +126,7 @@ public class FuelRequestService : IFuelRequestService
 
         if (request.Robot != null)
         {
-            request.Robot.Status = RobotStatus.Idle;
+            request.Robot.Status = RobotStatus.ReturningHome;
         }
 
         var updated = await _fuelRequestRepository.UpdateAsync(request);
@@ -188,5 +191,15 @@ public class FuelRequestService : IFuelRequestService
             .ToListAsync();
 
         return _mapper.Map<List<FuelRequestDTO>>(requests);
+    }
+
+    // Run Docker
+    private async Task<OsrmResponse> GetRouteFromOsrm(double startLat, double startLng, double endLat, double endLng)
+    {
+        using var httpClient = new HttpClient();
+        var url = $"http://localhost:5000/route/v1/driving/{startLng},{startLat};{endLng},{endLat}?overview=full";
+        var response = await httpClient.GetStringAsync(url);
+
+        return JsonSerializer.Deserialize<OsrmResponse>(response);
     }
 }

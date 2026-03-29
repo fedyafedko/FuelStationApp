@@ -6,5 +6,6 @@ public enum RobotStatus
     Idle,
     Busy,
     Charging,
-    Error
+    Error,
+    ReturningHome
 }

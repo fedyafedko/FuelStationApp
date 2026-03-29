@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axiosInstance from '../api/axiosInstance'
-import type { FuelRequestDTO } from '../types/api.types'
+import type { StatisticsResponse } from '../types/api.types'
 
 const STATUS_INFO: Record<number, { label: string; cls: string; dot: string }> = {
   0: { label: 'Pending',           cls: 'pending', dot: '#fb923c' },
@@ -22,21 +22,22 @@ function fmt(iso: string) {
 
 export function Dashboard() {
   const navigate = useNavigate()
-  const [requests, setRequests] = useState<FuelRequestDTO[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [statistics, setStatistics] = useState<StatisticsResponse>()
+
+
   useEffect(() => {
-    axiosInstance.get<FuelRequestDTO[]>('/api/fuel-request/history')
-      .then(r => setRequests(r.data))
+    axiosInstance.get<StatisticsResponse>('/api/statistics')
+      .then(r => setStatistics(r.data))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  const total     = requests.length
-  const active    = requests.filter(r => [0, 2, 5, 6].includes(r.status)).length
-  const completed = requests.filter(r => r.status === 1).length
-  const revenue   = requests.filter(r => r.status === 1).reduce((s, r) => s + (r.totalPrice ?? 0), 0)
-  const recent    = [...requests].sort((a, b) => new Date(b.createAt).getTime() - new Date(a.createAt).getTime()).slice(0, 8)
+  const total     = statistics?.totalRequests
+  const active    = statistics?.activeRequests
+  const completed = statistics?.completedRequests
+  const revenue   = statistics?.totalRevenue
 
   return (
     <div className="animate-in">
@@ -72,7 +73,7 @@ export function Dashboard() {
         </div>
         <div className="stat-card yellow">
           <div className="stat-label">Total Revenue</div>
-          <div className="stat-value yellow">{loading ? '—' : `₴${revenue.toLocaleString()}`}</div>
+          <div className="stat-value yellow">{loading ? '—' : `₴${revenue?.toLocaleString()}`}</div>
           <div className="stat-sub">From completed orders</div>
         </div>
       </div>
@@ -86,14 +87,14 @@ export function Dashboard() {
 
         {loading && <div className="spinner" />}
 
-        {!loading && recent.length === 0 && (
+        {!loading && statistics?.recentRequests.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">⛽</div>
             <div className="empty-text">No requests yet</div>
           </div>
         )}
 
-        {!loading && recent.length > 0 && (
+        {!loading && (statistics?.recentRequests?.length ?? 0) > 0 && (
           <table className="data-table">
             <thead>
               <tr>
@@ -107,7 +108,7 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recent.map(r => {
+              {statistics?.recentRequests.map(r => {
                 const si = STATUS_INFO[r.status] ?? STATUS_INFO[0]
                 return (
                   <tr key={r.id} onClick={() => navigate(`/requests/${r.id}`)}>

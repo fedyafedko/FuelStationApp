@@ -72,6 +72,14 @@ export interface LocationDTO {
   longitude: number;
 }
 
+export interface StatisticsResponse {
+  totalRequests: number
+  activeRequests: number
+  completedRequests: number
+  totalRevenue: number
+  recentRequests: FuelRequestDTO[]
+}
+
 export interface RouteDTO {
   id: string;
   fuelRequestId: string;
@@ -85,6 +93,22 @@ export interface RouteDTO {
   createdAt: string;
 }
 
+export interface RobotDTO {
+  id: string
+  uniqueNumber: string
+  status: number        
+  batteryLevel: number
+  tankCapacity: number
+  currentLocation: LocationDTO
+}
+
+
+export interface CreateRobotDTO {
+  uniqueNumber: string
+  tankCapacity: number
+  currentLocation: CreateLocationDTO
+}
+
 export interface FuelRequestDTO {
   id: string;
   carId: string;
@@ -95,4 +119,5 @@ export interface FuelRequestDTO {
   cancelReason: string;      
   route?: RouteDTO;
   car: CarDTO;
+  location: LocationDTO;
 }

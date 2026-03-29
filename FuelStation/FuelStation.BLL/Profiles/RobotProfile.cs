@@ -10,5 +10,6 @@ public class RobotProfile : Profile
     {
         CreateMap<Robot, RobotDTO>();
         CreateMap<CreateRobotDTO, Robot>();
+        CreateMap<UpdateRobotDTO, Robot>();
     }
 }

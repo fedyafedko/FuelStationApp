@@ -9,6 +9,7 @@ public class RobotDTO
     public RobotStatus Status { get; set; }
     public double TankCapacity { get; set; }
     public double BatteryLevel { get; set; }
+    public string UniqueNumber { get; set; }
 
     public LocationDTO? CurrentLocation { get; set; }
 }

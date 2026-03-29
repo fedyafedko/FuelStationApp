@@ -18,4 +18,5 @@ public class FuelRequestDTO
     public RouteDTO Route { get; set; }
     public CarDTO Car { get; set; }
     public RobotDTO Robot { get; set; }
+    public LocationDTO Location { get; set; }
 }

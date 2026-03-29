@@ -481,3 +481,21 @@ select.form-input { cursor: pointer; }
 .robot-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
 .robot-stat-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--mono); }
 .robot-stat-value { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 2px; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+
+  animation: fadeIn 0.15s ease;
+}
+
+.modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 18px; padding: 28px; width: 100%; max-width: 520px;
+  max-height: calc(100svh - 48px);
+  overflow-y: auto;
+  margin: auto;
+  animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1);
+}

@@ -151,7 +151,8 @@ export function RequestDetailPage() {
           <div className="detail-grid">
             {/* Left column */}
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-
+            {req.status != 7 &&
+            <>
               {/* Map */}
               {req.route ? (
                 <div className="detail-card" style={{ padding:16 }}>
@@ -187,7 +188,64 @@ export function RequestDetailPage() {
                   </div>
                 </div>
               )}
-
+              </>
+              }
+              {req.status === 7 && req.location.latitude && req.location.longitude && (
+                <div className="detail-card" style={{ borderColor:'rgba(167,139,250,0.3)' }}>
+                  <div className="detail-card-title" style={{ color:'#a78bfa' }}>
+                    Delivery Location (Car Sent)
+                  </div>
+              
+                  <div style={{
+                    background:'var(--surface2)',
+                    padding:'12px 14px',
+                    borderRadius:8,
+                    border:'1px solid var(--border)',
+                    marginBottom:12
+                  }}>
+                    <div className="info-row">
+                      <span className="info-label">Latitude</span>
+                      <span className="info-value mono">{req.location.latitude.toFixed(6)}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Longitude</span>
+                      <span className="info-value mono">{req.location.longitude.toFixed(6)}</span>
+                    </div>
+                  </div>
+                
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${req.location.latitude}, ${req.location.longitude}`)
+                    }}
+                    style={{
+                      background:'#a78bfa',
+                      border:'none',
+                      padding:'8px 14px',
+                      borderRadius:6,
+                      color:'#0b0f19',
+                      fontWeight:600,
+                      cursor:'pointer'
+                    }}
+                  >
+                    Copy Coordinates
+                  </button>
+                  
+                  <a
+                    href={`https://www.google.com/maps?q=${req.location.latitude},${req.location.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display:'inline-block',
+                      marginLeft:10,
+                      color:'#60a5fa',
+                      fontWeight:600,
+                      textDecoration:'none'
+                    }}
+                  >
+                    Open in Google Maps
+                  </a>
+                </div>
+              )}
               {/* Cancellation reason */}
               {req.status === 3 && req.cancelReason && (
                 <div className="detail-card" style={{ background:'rgba(244,63,94,0.04)', borderColor:'rgba(244,63,94,0.18)' }}>

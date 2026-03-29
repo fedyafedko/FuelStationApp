@@ -2,7 +2,7 @@
 
 namespace FuelStation.Common.Models.DTOs.Robot;
 
-public class CreateRobotDTO
+public class UpdateRobotDTO
 {
     public double TankCapacity { get; set; }
     public string UniqueNumber { get; set; }

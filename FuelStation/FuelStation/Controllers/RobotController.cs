@@ -22,10 +22,38 @@ public class RobotController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut]
+    public async Task<IActionResult> Update([FromQuery] Guid robotId, UpdateRobotDTO dto)
+    {
+        var result = await _robotService.UpdateRobotAsync(robotId, dto);
+        return Ok(result);
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> Delete(Guid robotId)
+    {
+        var result = await _robotService.DeleteRobotAsync(robotId);
+        return Ok(result);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var result = await _robotService.GetAllRobotsAsync();
         return Ok(result);
+    }
+
+    [HttpGet("route")]
+    public async Task<IActionResult> GetRoute(Guid robotId)
+    {
+        var result = await _robotService.GetRobotRouteAsync(robotId);
+        return Ok(result);
+    }
+
+    [HttpPut("arrived")]
+    public async Task<IActionResult> Arrived([FromQuery] Guid robotId)
+    {
+        await _robotService.ArrivedAsync(robotId);
+        return Ok();
     }
 }
