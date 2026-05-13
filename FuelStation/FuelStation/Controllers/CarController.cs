@@ -1,12 +1,14 @@
 ﻿using FuelStation.BLL.Services.Interfaces;
 using FuelStation.Common.Models.DTOs.Car;
 using FuelStation.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FuelStation.Controllers;
 
 [ApiController]
 [Route("api/car")]
+[Authorize]
 public class CarController : ControllerBase
 {
     private readonly ICarService _carService;

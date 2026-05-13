@@ -104,7 +104,7 @@ public class RobotService : IRobotService
         var fuelRequest = await _fuelRequestRepository
             .Include(x => x.Route)
             .Include(x => x.Robot)
-            .Where(x => x.RobotId == robotId && x.CompletedAt == null)
+            .Where(x => x.RobotId == robotId && x.CompletedAt != null)
             .OrderByDescending(x => x.CompletedAt)
             .FirstOrDefaultAsync();
 

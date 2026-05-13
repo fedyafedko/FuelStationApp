@@ -124,7 +124,6 @@ builder.Services.AddSwaggerGen(c =>
 
     c.MapType<TimeSpan>(() => new OpenApiSchema
     {
-        Type = "string",
         Example = new Microsoft.OpenApi.Any.OpenApiString("00:00:00")
     });
 });

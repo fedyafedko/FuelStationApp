@@ -1,12 +1,14 @@
 ﻿using FuelStation.BLL.Services.Interfaces;
 using FuelStation.Common.Models.DTOs.FuelRequest;
 using FuelStation.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FuelStation.Controllers;
 
 [ApiController]
 [Route("api/fuel-request")]
+[Authorize]
 public class FuelRequestController : ControllerBase
 {
     private readonly IFuelRequestService _fuelRequestService;

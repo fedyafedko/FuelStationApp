@@ -1,12 +1,14 @@
 ﻿using FuelStation.BLL.Services.Interfaces;
 using FuelStation.Common.Models.DTOs.User;
 using FuelStation.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FuelStation.Controllers;
 
 [ApiController]
 [Route("api/user")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;

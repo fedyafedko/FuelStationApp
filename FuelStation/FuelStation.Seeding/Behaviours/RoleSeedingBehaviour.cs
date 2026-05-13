@@ -16,7 +16,7 @@ public class RoleSeedingBehaviour : ISeedingBehaviour
     {
         var roles = new List<string>
         {
-            "Dispatcher",
+            "Manager",
             "Driver"
         };
 

@@ -1,11 +1,13 @@
 ﻿using FuelStation.BLL.Services.Interfaces;
 using FuelStation.Common.Models.DTOs.Robot;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FuelStation.Controllers;
 
 [ApiController]
 [Route("api/robot")]
+//[Authorize(Roles = "Manager")]
 public class RobotController : ControllerBase
 {
     private readonly IRobotService _robotService;
